@@ -40,7 +40,7 @@ export const run = async (
 
   const report = await parseReport(path)
   if (!report) {
-    throw Error('No kover report detected')
+    throw Error('No xccov report detected')
   }
 
   const overallCoverage = getOverallCoverage(report)

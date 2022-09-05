@@ -1,47 +1,25 @@
-export type Counter = {
-  $: {
-    type: 'INSTRUCTION' | 'BRANCH' | 'LINE' | 'METHOD' | 'CLASS'
-    missed: string
-    covered: string
-  }
+type UnexecutableLine = {
+  isExecutable: false
+  line: number
 }
 
-type Class = {
-  $: {
-    name: string
-    sourcefilename: string
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  method: any[]
-  counter: Counter[]
+type ExecutableLine = {
+  isExecutable: true
+  line: number
+  executionCount: number
+  subranges?: Subrange[]
 }
 
-type SourceFile = {
-  $: {
-    name: string
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  line: any[]
-  counter: Counter[]
+type Subrange = {
+  column: number
+  executionCount: number
+  length: number
 }
 
-type Package = {
-  $: {
-    name: string
-  }
-  class: Class[]
-  sourcefile: SourceFile[]
-  counter: Counter[]
-}
+export type Line = ExecutableLine | UnexecutableLine
 
 export type Report = {
-  report: {
-    $: {
-      name: string
-    }
-    package?: Package[]
-    counter?: Counter[]
-  }
+  [sourcePath: string]: Line[]
 }
 
 export type Coverage = {

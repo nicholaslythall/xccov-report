@@ -1,29 +1,41 @@
 import * as fs from 'fs'
-import * as parser from 'xml2js'
 import {
   Report,
-  Counter,
+  Line,
   Coverage,
   ChangedFile,
   ChangedFilesCoverage,
-  ChangedFileWithCoverage
+  ChangedFileWithCoverage,
+  ExecutableLine
 } from './types.d'
 
 export const parseReport = async (path: string): Promise<Report | null> => {
-  const reportXml = await fs.promises.readFile(path.trim(), 'utf-8')
-  return parser.parseStringPromise(reportXml)
+  const reportJson = await fs.promises.readFile(path.trim(), 'utf-8')
+  return JSON.parse(reportJson)
 }
 
-export const getCoverageFromCounters = (
-  counters: Counter[]
-): Coverage | null => {
-  const lineCounter = counters.find(counter => counter['$'].type === 'LINE')?.[
-    '$'
-  ]
-  if (!lineCounter) return null
+export const getCoverageFromLines = (counters: Line[]): Coverage | null => {
+  const executableLines = counters.reduce<ExecutableLine[]>((acc, line) => {
+    if (line.isExecutable) {
+      acc.push(line)
+    }
+    return acc
+  }, [])
 
-  const missed = parseFloat(lineCounter.missed)
-  const covered = parseFloat(lineCounter.covered)
+  if (executableLines.length === 0) {
+    return null
+  }
+
+  let missed = 0
+  let covered = 0
+
+  for (const line of executableLines) {
+    if (line.executionCount > 0) {
+      covered += 1
+    } else {
+      missed += 1
+    }
+  }
 
   return {
     missed,
@@ -33,8 +45,8 @@ export const getCoverageFromCounters = (
 }
 
 export const getOverallCoverage = (report: Report): Coverage | null => {
-  if (!report.report?.counter) return null
-  return getCoverageFromCounters(report.report.counter)
+  const allLines = Object.entries(report).flatMap(([, lines]) => lines)
+  return getCoverageFromLines(allLines)
 }
 
 export const getFileCoverage = (
@@ -43,17 +55,17 @@ export const getFileCoverage = (
 ): ChangedFilesCoverage => {
   const filesWithCoverage = files.reduce<ChangedFileWithCoverage[]>(
     (acc, file) => {
-      report.report?.package?.map(item => {
-        const packageName = item['$'].name
-        const sourceFile = item.sourcefile.find(sf => {
-          const sourceFileName = sf['$'].name
-          return file.filePath.endsWith(`${packageName}/${sourceFileName}`)
-        })
-        if (sourceFile) {
-          const coverage = getCoverageFromCounters(sourceFile.counter)
-          if (coverage) acc.push({...file, ...coverage})
-        }
-      })
+      const sourceLines = Object.entries(report).find(([name]) =>
+        name.endsWith(file.filePath)
+      )
+      if (sourceLines) {
+        const coverage = getCoverageFromLines(sourceLines[1])
+        if (coverage)
+          acc.push({
+            ...file,
+            ...coverage
+          })
+      }
       return acc
     },
     []

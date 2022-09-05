@@ -1,8 +1,8 @@
 {
-  "name": "kover-report",
+  "name": "xccov-report",
   "version": "0.0.1",
   "private": true,
-  "description": "Github action that publishes the Kover code coverage report as a comment in pull requests",
+  "description": "Github action that publishes the xccov code coverage report as a comment in pull requests",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",
@@ -17,25 +17,23 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mi-kas/kover-report.git"
+    "url": "git+https://github.com/nicholaslythall/xccov-report.git"
   },
   "keywords": [
     "actions",
     "node",
-    "kotlin",
-    "kover",
+    "xcode",
+    "xccov",
     "code coverage"
   ],
-  "author": "Michael Kaserer <mi.kaserer@gmail.com>",
+  "author": "Nicholas Lythall",
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.9.1",
-    "@actions/github": "^5.0.3",
-    "xml2js": "^0.4.23"
+    "@actions/github": "^5.0.3"
   },
   "devDependencies": {
     "@types/node": "^18.7.9",
-    "@types/xml2js": "^0.4.11",
     "@typescript-eslint/parser": "^5.34.0",
     "@vercel/ncc": "^0.34.0",
     "eslint": "^8.22.0",

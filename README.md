@@ -1,8 +1,10 @@
-# kover-report
+# xccov-report
 
-[![Tests](https://github.com/mi-kas/kover-report/actions/workflows/test.yml/badge.svg)](https://github.com/mi-kas/kover-report/actions/workflows/test.yml)
+[![Tests](https://github.com/nicholaslythall/xccov-report/actions/workflows/test.yml/badge.svg)](https://github.com/nicholaslythall/xccov-report/actions/workflows/test.yml)
 
-A Github action that publishes the [Kover](https://github.com/Kotlin/kotlinx-kover) code coverage report as a comment in pull requests.
+A Github action that publishes the xccov code coverage report as a comment in pull requests.
+
+Forked from [kover-report](https://github.com/mi-kas/kover-report)
 
 ## Usage
 
@@ -12,7 +14,7 @@ Create a workflow `.yml` file in your repositories `.github/workflows` directory
 
 ### Inputs
 
-- `path` - [**required**] Path to the generated kover report xml file
+- `path` - [**required**] Path to the generated xccov report json file
 - `token` - [**required**] Github personal token to add commits to the pull request
 - `title` - [*optional*] Title for the pull request comment
 - `update-comment` - [*optional* (default: `false`)] Update the coverage report comment instead of creating a new one. Requires `title` to be set.
@@ -41,16 +43,15 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: 11
-      - name: Set up Gradle
-        uses: gradle/gradle-build-action@v2
-      - name: Generate kover coverage report
-        run: ./gradlew koverXmlReport
-
+      - name: Run tests...
+        uses: ...
+      - name: Generate xccov coverage report
+        run: xcrun xccov view --archive --json path/to/DerivedData/Logs/Test/Test.xcresult  > ${{ github.workspace }}/report.json
       - name: Add coverage report to PR
-        id: kover
-        uses: mi-kas/kover-report@v1
+        id: xccov
+        uses: nicholaslythall/xccov-report@v1
         with:
-          path: ${{ github.workspace }}/build/reports/kover/report.xml
+          path: ${{ github.workspace }}/report.json
           token: ${{ secrets.GITHUB_TOKEN }}
           title: Code Coverage
           update-comment: true

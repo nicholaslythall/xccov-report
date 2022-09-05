@@ -1,7 +1,7 @@
 import {describe, test, expect} from '@jest/globals'
 import {
   parseReport,
-  getCoverageFromCounters,
+  getCoverageFromLines,
   getOverallCoverage,
   getTotalPercentage,
   getFileCoverage
@@ -10,52 +10,61 @@ import {Report, ChangedFileWithCoverage, ChangedFile} from '../src/types'
 
 describe('Reader functions', () => {
   const sampleReport: Report = {
-    report: {
-      $: {name: 'Intellij Coverage Report'},
-      counter: [
-        {$: {type: 'INSTRUCTION', missed: '7418', covered: '25767'}},
-        {$: {type: 'BRANCH', missed: '665', covered: '874'}},
-        {$: {type: 'LINE', missed: '900', covered: '3346'}},
-        {$: {type: 'METHOD', missed: '230', covered: '602'}},
-        {$: {type: 'CLASS', missed: '160', covered: '330'}}
-      ]
-    }
+    '/users/current/project/main.swift': [
+      {isExecutable: false, line: 1},
+      {isExecutable: true, line: 2, executionCount: 0},
+      {isExecutable: true, line: 3, executionCount: 4},
+      {isExecutable: true, line: 4, executionCount: 1},
+      {isExecutable: true, line: 5, executionCount: 0},
+      {isExecutable: false, line: 6}
+    ],
+    '/users/current/project/module/Foo.swift': [
+      {isExecutable: false, line: 1},
+      {isExecutable: true, line: 2, executionCount: 0},
+      {isExecutable: true, line: 3, executionCount: 2},
+      {isExecutable: true, line: 4, executionCount: 0}
+    ]
   }
 
-  test('parse kover report from xml file', async () => {
-    const report = await parseReport('./tests/examples/report.xml')
+  test('parse xccov report from json file', async () => {
+    const report = await parseReport('./tests/examples/report.json')
     expect(report).toMatchObject(sampleReport as Record<string, any>)
   })
 
   test('get coverage from counters', () => {
-    const coverage = getCoverageFromCounters(sampleReport.report.counter!!)
+    const coverage = getCoverageFromLines(
+      sampleReport['/users/current/project/main.swift']
+    )
     expect(coverage).toMatchObject({
-      missed: 900,
-      covered: 3346,
-      percentage: 78.8
+      missed: 2,
+      covered: 2,
+      percentage: 50.0
     })
   })
 
   test('get coverage from counters returns null if no line counters', () => {
-    const coverage = getCoverageFromCounters(
-      sampleReport.report.counter!!.filter(c => c.$.type !== 'LINE')
-    )
+    const coverage = getCoverageFromLines([
+      {line: 1, isExecutable: false},
+      {line: 2, isExecutable: false},
+      {line: 3, isExecutable: false},
+      {line: 4, isExecutable: false},
+      {line: 5, isExecutable: false}
+    ])
     expect(coverage).toBeNull()
   })
 
   test('get overall coverage from report', () => {
     const coverage = getOverallCoverage(sampleReport)
     expect(coverage).toMatchObject({
-      missed: 900,
-      covered: 3346,
-      percentage: 78.8
+      missed: 4,
+      covered: 3,
+      percentage: 42.86
     })
   })
 
   test('get overall coverage from report returns null if no counters', () => {
     const coverage = getOverallCoverage({
-      ...sampleReport,
-      report: {...sampleReport.report, counter: undefined}
+      '': []
     })
     expect(coverage).toBeNull()
   })
@@ -89,84 +98,65 @@ describe('Reader functions', () => {
   test('get changed files coverage', () => {
     const changedFiles: ChangedFile[] = [
       {
-        filePath: 'com/github/mi-kas/utils/Details.kt',
-        url: 'file-url-detail'
+        filePath: 'main.swift',
+        url: 'file-url-main'
       },
       {
-        filePath: 'com/github/mi-kas/utils/Util.kt',
-        url: 'file-url-util'
+        filePath: 'some/nested/folder/baz.swift',
+        url: 'file-url-baz'
       }
     ]
+
     const report: Report = {
       ...sampleReport,
-      report: {
-        ...sampleReport.report,
-        package: [
-          {
-            $: {name: 'com/github/mi-kas/utils'},
-            class: [],
-            sourcefile: [
-              {
-                $: {name: 'Details.kt'},
-                line: [],
-                counter: [
-                  {$: {type: 'INSTRUCTION', missed: '33', covered: '5'}},
-                  {$: {type: 'BRANCH', missed: '2', covered: '0'}},
-                  {$: {type: 'LINE', missed: '5', covered: '2'}}
-                ]
-              },
-              {
-                $: {name: 'Util.kt'},
-                line: [],
-                counter: [
-                  {$: {type: 'INSTRUCTION', missed: '64', covered: '163'}},
-                  {$: {type: 'BRANCH', missed: '9', covered: '3'}},
-                  {$: {type: 'LINE', missed: '21', covered: '32'}}
-                ]
-              }
-            ],
-            counter: [
-              {$: {type: 'INSTRUCTION', missed: '97', covered: '168'}},
-              {$: {type: 'BRANCH', missed: '11', covered: '3'}},
-              {$: {type: 'LINE', missed: '26', covered: '34'}},
-              {$: {type: 'METHOD', missed: '2', covered: '7'}},
-              {$: {type: 'CLASS', missed: '0', covered: '7'}}
-            ]
-          }
-        ]
-      }
+      '/users/current/project/some/nested/folder/baz.swift': [
+        {line: 1, isExecutable: false},
+        {line: 2, isExecutable: true, executionCount: 0},
+        {line: 3, isExecutable: true, executionCount: 4},
+        {line: 4, isExecutable: true, executionCount: 1},
+        {line: 5, isExecutable: true, executionCount: 0},
+        {line: 6, isExecutable: false},
+        {line: 7, isExecutable: true, executionCount: 10},
+        {line: 8, isExecutable: true, executionCount: 0},
+        {line: 9, isExecutable: false},
+        {line: 10, isExecutable: true, executionCount: 3},
+        {line: 11, isExecutable: true, executionCount: 1},
+        {line: 12, isExecutable: true, executionCount: 5},
+        {line: 13, isExecutable: true, executionCount: 10}
+      ]
     }
+
     const coverage = getFileCoverage(report, changedFiles)
     expect(coverage).toMatchObject({
       files: [
         {
-          filePath: 'com/github/mi-kas/utils/Details.kt',
-          url: 'file-url-detail',
-          missed: 5,
+          filePath: 'main.swift',
+          url: 'file-url-main',
+          missed: 2,
           covered: 2,
-          percentage: 28.57
+          percentage: 50.0
         },
         {
-          filePath: 'com/github/mi-kas/utils/Util.kt',
-          url: 'file-url-util',
-          missed: 21,
-          covered: 32,
-          percentage: 60.38
+          filePath: 'some/nested/folder/baz.swift',
+          url: 'file-url-baz',
+          missed: 3,
+          covered: 7,
+          percentage: 70.0
         }
       ],
-      percentage: 56.67
+      percentage: 64.29
     })
   })
 
   test('get changed files coverage on no matching changes', () => {
     const changedFiles: ChangedFile[] = [
       {
-        filePath: 'com/github/mi-kas/utils/Details.kt',
-        url: 'file-url-detail'
+        filePath: 'module/Bar.swift',
+        url: 'file-url-bar'
       },
       {
-        filePath: 'com/github/mi-kas/utils/Util.kt',
-        url: 'file-url-util'
+        filePath: 'common.swift',
+        url: 'file-url-common'
       }
     ]
     const coverage = getFileCoverage(sampleReport, changedFiles)

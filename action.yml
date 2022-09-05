@@ -1,10 +1,10 @@
-name: 'Kotlinx Kover Report'
-description: 'Github action that publishes the Kover code coverage report as a comment in pull requests'
+name: 'xccov Report'
+description: 'Github action that publishes the xccov code coverage report as a comment in pull requests'
 
 inputs:
   path:
     required: true
-    description: 'Path to the generated kover report xml file'
+    description: 'Path to the generated xccov report json file'
   token:
     required: true
     description: 'Github personal token to add commits to the pull request'
